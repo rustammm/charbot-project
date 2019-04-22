@@ -50,4 +50,4 @@
 >>> r.get('http://127.0.0.1:51000/api/{"uid": 1, "query": "пойдем играть во двор"}').json()
 {'uid': 1, 'from': 'model', 'ok': True, 'reply': 'а ты не такои '}
 
-Чтобы запустить серсис нужно скучать https://yadi.sk/d/vIe8vtAXw-eTfQ и положить в директорию service директорию data и вызвать ./start.sh
+Чтобы запустить серсис нужно скачать https://yadi.sk/d/vIe8vtAXw-eTfQ и положить в директорию service директорию data и вызвать ./start.sh
