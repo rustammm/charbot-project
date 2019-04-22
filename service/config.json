@@ -1,0 +1,12 @@
+{
+    "main" : 51000,
+    "model": 51001,
+    "wiki" : {
+        "wiki1": 51002,
+        "wiki2": 51003
+    },
+    "wiki_chunk" : {
+        "wiki1": 0,
+        "wiki2": 1
+    }
+}
