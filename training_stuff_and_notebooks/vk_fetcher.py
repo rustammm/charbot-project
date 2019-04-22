@@ -1,7 +1,7 @@
 import vk
 
 # sensetive info
-ACCESS_TOKEN = 'acf248f0acf248f0acf248f0afac9be414aacf2acf248f0f0518bf5dcf976e751fc490d'
+ACCESS_TOKEN = ''
 STEP = 100
 
 class VkFetcher:
