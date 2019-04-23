@@ -40,6 +40,7 @@ def fetch_async(request):
 
 @app.route('/api/<string:request>', methods=['GET'])
 def home(request):
+    print('request', request)
     req = json.loads(request, encoding='utf8')
     result = fetch_async(request)
     results = []

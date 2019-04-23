@@ -32,6 +32,30 @@ SLAVES_ADDRS = [MODEL_ADDR] + list(WIKI_ADDRS.values())
 
 # In[21]:
 
+import rutokenizer
+import rupostagger
+import rulemma
+
+
+lemmatizer = rulemma.Lemmatizer()
+lemmatizer.load()
+
+tokenizer = rutokenizer.Tokenizer()
+tokenizer.load()
+
+tagger = rupostagger.RuPosTagger()
+tagger.load()
+
+
+def preprocess_text(sent):
+  tokens = tokenizer.tokenize(sent)
+  tags = tagger.tag(tokens)
+  lemmas = lemmatizer.lemmatize(tags)
+  ret = []
+  return ' '.join([lemma for word, tags, lemma, *_ in lemmas])
+
+
+
 
 import numpy as np
 import torch
@@ -460,47 +484,63 @@ def data_gen(V, batch, nbatches):
 
 # In[36]:
 
+class Lang:
+    def __init__(self, name):
+        self.name = name
+        self.word2index = {}
+        self.word2count = {}
+        self.index2word = {0: "<PAD>", 1: "<UNK>", 2: "<SOS>", 3 : "<EOS>", 4: "<HIS>"}
+        self.n_words = 5
+        self.cnt_words_total = 0
+
+    def addSentence(self, sentence):
+        for word in sentence.split(' '):
+            self.addWord(word)
+
+    def addWord(self, word):
+        self.cnt_words_total += 1
+
+        if word in self.word2index:
+            self.word2count[word] += 1
+        else:
+            self.word2index[word] = self.n_words
+            self.word2count[word] = 1
+            self.index2word[self.n_words] = word
+            self.n_words += 1
+
+    def get_index_from_word(self, word):
+        if word not in self.word2index:
+            return self.word2index["<UNK>"]
+        else:
+            return self.word2index[word]
+
+    def get_indexes_from_sentence(self, sentence):
+        return [self.get_index_from_word(word)
+            for word in sentence.split(' ')] + [3]
+
+
+
 
 # For data loading.
 from torchtext import data
-
-if True:
-    import json
-    with open('../dataset/filtered_dataset_sm.json', encoding='utf8') as f:
-        pairs = json.load(f)
-
-    def tokenize_de(text):
-        return list(filter(lambda k: len(k) > 0 ,text.split(' ')))
-
-    def tokenize_en(text):
-        return list(filter(lambda k: len(k) > 0 ,text.split(' ')))
-
-    BOS_WORD = '<s>'
-    EOS_WORD = '</s>'
-    BLANK_WORD = "<blank>"
-    SRC = data.Field(tokenize=tokenize_de, pad_token=BLANK_WORD)
-    TGT = data.Field(tokenize=tokenize_en, init_token = BOS_WORD, 
-                     eos_token = EOS_WORD, pad_token=BLANK_WORD)
-    print(SRC)
-    MAX_LEN = 6
-    #train, val, test = datasets.IWSLT.splits(
-    #    exts=('.de', '.en'), fields=(SRC, TGT), 
-    #    filter_pred=lambda x: len(vars(x)['src']) <= MAX_LEN and 
-    #        len(vars(x)['trg']) <= MAX_LEN)
-    #print((list(train.src)[0]))
-    
-    examples = [data.Example.fromlist(pair, [('src', SRC), ('trg', TGT)]) for pair in pairs]
-    dataset = data.Dataset(examples, [('src', SRC), ('trg', TGT)],
-                           filter_pred=lambda x: len(vars(x)['src']) <= MAX_LEN and len(vars(x)['trg']) <= MAX_LEN)
-    dataset.name = ''
-    train, val, test = dataset.split(split_ratio=[0.8,0.1,0.1])
-    
-    MIN_FREQ = 2
-    SRC.build_vocab(train.src, min_freq=MIN_FREQ)
-    TGT.build_vocab(train.trg, min_freq=MIN_FREQ)
+import gc
 
 
-# In[37]:
+BOS_WORD = '<s>'
+EOS_WORD = '</s>'
+BLANK_WORD = "<blank>"
+MAX_LEN = 5
+MIN_FREQ = 2
+
+
+
+
+def tokenize_src(text):
+    return list(filter(lambda k: len(k) > 0 ,text.split(' ')))
+
+def tokenize_tgt(text):
+    return list(filter(lambda k: len(k) > 0 ,text.split(' ')))
+
 
 
 def greedy_decode(model, src, src_mask, max_len, start_symbol):
@@ -589,65 +629,6 @@ class SimpleLossCompute:
         return loss.data * norm
 
 
-# In[45]:
-
-
-if False:
-    model_opt = NoamOpt(model.src_embed[0].d_model, 1, 2000,
-            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
-    for epoch in range(10):
-        model_par.train()
-        run_epoch((rebatch(pad_idx, b) for b in train_iter), 
-                  model_par, 
-                  SimpleLossCompute(model.generator, criterion, model_opt))
-        model_par.eval()
-        loss = run_epoch((rebatch(pad_idx, b) for b in valid_iter), 
-                          model_par, 
-                          SimpleLossCompute(model.generator, criterion, None))
-        print(loss)
-else:
-    model = torch.load('data/chitchat.pt', map_location='cpu')
-
-
-# for i, batch in enumerate(valid_iter):
-#     src = batch.src.transpose(0, 1)[:1]
-#     
-#     print('Query:', end="\t")
-#     for i in range(1, batch.src.size(0)):
-#         sym = SRC.vocab.itos[batch.src.data[i, 0]]
-#         if sym == "</s>": break
-#         print(sym, end =" ")
-#     print()
-#             
-#     src_mask = (src != SRC.vocab.stoi["<blank>"]).unsqueeze(-2)
-#     out = greedy_decode(model, src, src_mask, 
-#                         max_len=60, start_symbol=TGT.vocab.stoi["<s>"])
-#     
-#     print("Translation:", end="\t")
-#     for i in range(1, out.size(1)):
-#         sym = TGT.vocab.itos[out[0, i]]
-#         if sym == "</s>": break
-#         print(sym, end =" ")
-#     print()
-#     print("Target:", end="\t")
-#     for i in range(1, batch.trg.size(0)):
-#         sym = TGT.vocab.itos[batch.trg.data[i, 0]]
-#         if sym == "</s>": break
-#         print(sym, end =" ")
-#     print()
-
-# In[46]:
-
-
-def average(model, models):
-    "Average models into model"
-    for ps in zip(*[m.params() for m in [model] + models]):
-        p[0].copy_(torch.sum(*ps[1:]) / len(ps[1:]))
-
-
-# In[89]:
-
-
 import re
 import regex
 import unicodedata
@@ -703,6 +684,13 @@ def filterPairs(pairs):
 
 # In[101]:
 
+with open('data/SRCVS.json') as f:
+    SRCVS = json.load(f)
+
+with open('data/TGTVI.json') as f:
+    TGTVI = json.load(f)
+
+model = torch.load('data/chitchat.pt', map_location='cpu')
 
 #model.eval()
 def get_answer(query = "москва - хороший город ?"):
@@ -711,17 +699,17 @@ def get_answer(query = "москва - хороший город ?"):
     if len(filtered) == 0:
         print('oops')
         return None
-    query = filtered[0][0]
+    query = preprocess_text(filtered[0][0])
     sent = query.split(' ')
-    src = torch.LongTensor([[SRC.vocab.stoi[w] for w in sent]])
+    src = torch.LongTensor([[SRCVS[w] for w in sent]])
     src = Variable(src)
-    src_mask = (src != SRC.vocab.stoi["<blank>"]).unsqueeze(-2)
+    src_mask = (src != SRCVS["<blank>"]).unsqueeze(-2)
     out = greedy_decode(model, src, src_mask, 
-                        max_len=60, start_symbol=TGT.vocab.stoi["<s>"])
+                        max_len=60, start_symbol=2)
     print("Translation:", end="\t")
     trans = ""
     for i in range(1, out.size(1)):
-        sym = TGT.vocab.itos[out[0, i]]
+        sym = TGTVI[out[0, i]]
         if sym == "</s>": break
         if sym == " ": continue
         trans += sym + " "
