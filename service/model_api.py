@@ -606,7 +606,7 @@ if False:
                           SimpleLossCompute(model.generator, criterion, None))
         print(loss)
 else:
-    model = torch.load('data/chitchat.pt')
+    model = torch.load('data/chitchat.pt', map_location='cpu')
 
 
 # for i, batch in enumerate(valid_iter):
@@ -749,9 +749,9 @@ def shutdown():
 
 @app.route('/api/<string:request>', methods=['GET'])
 def home(request):
-    req = json.loads(request)
+    req = json.loads(request, encoding='utf8')
     uid = req['uid']
-    query = req['query']
+    query = req['query'].replace('q', '?')
 
     res = get_answer(query.lower())
     if not res:

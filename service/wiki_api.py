@@ -41,7 +41,7 @@ def shutdown():
 @app.route('/api/<string:request>', methods=['GET'])
 def home(request):
     req = json.loads(request)
-    query = req['query']
+    query = req['query'].replace('q', '?')
     uid = req['uid']
 
     res = wiki.get_best_doc(query)
