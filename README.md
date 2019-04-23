@@ -52,3 +52,4 @@
 
 Чтобы запустить серсис нужно скачать https://yadi.sk/d/vIe8vtAXw-eTfQ и положить в директорию service директорию data и вызвать ./start.sh
 Используйет 'q' вместо '?'
+Скачайте хорошую модель chitchat.py (service/data) https://drive.google.com/file/d/1RaX0I9-YyJlT1RKmHpOnGSHzoNkKUZ5y/view?usp=sharing
