@@ -1,3 +1,13 @@
+Чтобы запустить серсис нужно скачать https://yadi.sk/d/vIe8vtAXw-eTfQ и положить в директорию service директорию data и вызвать ./start.sh
+
+Используйет 'q' вместо '?'
+
+Скачайте хорошую модель chitchat.py (service/data) https://drive.google.com/file/d/1RaX0I9-YyJlT1RKmHpOnGSHzoNkKUZ5y/view?usp=sharing
+
+
+
+
+python shell
 >>> r.get('http://127.0.0.1:51000/api/{"uid": 1, "query": "Самая высокая гора"}').json()
 
 {'uid': 1, 'from': 'model', 'ok': True, 'reply': 'а ты не понял '}
@@ -50,6 +60,3 @@
 >>> r.get('http://127.0.0.1:51000/api/{"uid": 1, "query": "пойдем играть во двор"}').json()
 {'uid': 1, 'from': 'model', 'ok': True, 'reply': 'а ты не такои '}
 
-Чтобы запустить серсис нужно скачать https://yadi.sk/d/vIe8vtAXw-eTfQ и положить в директорию service директорию data и вызвать ./start.sh
-Используйет 'q' вместо '?'
-Скачайте хорошую модель chitchat.py (service/data) https://drive.google.com/file/d/1RaX0I9-YyJlT1RKmHpOnGSHzoNkKUZ5y/view?usp=sharing
